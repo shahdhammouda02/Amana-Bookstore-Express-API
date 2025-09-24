@@ -1,0 +1,12 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "token": "secret-token-123"
+    },
+    {
+      "username": "editor",
+      "token": "editor-token-456"
+    }
+  ]
+}

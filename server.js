@@ -1,4 +1,8 @@
 const express = require("express");
+const fs= require("fs");
+const path = require("path");
+const authUserPath = path.join(__dirname, 'data', 'authUsers.json');
+const AUTH_USERS = JSON.parse(fs.readFileSync(authUserPath)).users;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -94,8 +98,28 @@ app.get("/api/books/:id/reviews", (req, res) => {
 });
 
 //POST Routes
+
+//Authentication
+function authenticate(req, res, next) {
+  const token = req.headers['authorization'];
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  const cleanToken = token.replace(/^Bearer\s+/i, '');
+  const user = AUTH_USERS.find(u => u.token === cleanToken);
+
+  if (!user) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  req.user = user;
+  next();
+}
+
 //Add New Book Endpoint
-app.post('/api/books', (req, res) => {
+app.post('/api/books', authenticate, (req, res) => {
   const {
     title,
     author,
@@ -151,7 +175,7 @@ app.post('/api/books', (req, res) => {
 });
 
 //Add New Review Endpoint
-app.post('/api/reviews', (req, res) => {
+app.post('/api/reviews', authenticate, (req, res) => {
   const { bookId, author, rating, title, comment, verified } = req.body;
 
   // validation

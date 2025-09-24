@@ -7,6 +7,7 @@ const { reviews } = require("./data/reviews.json");
 
 app.use(express.json());
 
+//Get Routes
 //All Books Endpoint
 app.get("/api/books", (req, res) => {
   res.json(books);
@@ -91,6 +92,107 @@ app.get("/api/books/:id/reviews", (req, res) => {
     reviews: bookReviews,
   });
 });
+
+//POST Routes
+//Add New Book Endpoint
+app.post('/api/books', (req, res) => {
+  const {
+    title,
+    author,
+    description,
+    price,
+    isbn,
+    genre,
+    tags,
+    datePublished,
+    pages,
+    language,
+    publisher,
+    rating,
+    reviewCount,
+    inStock,
+    featured
+  } = req.body;
+
+  // validation
+  if (!title || !author || !price) {
+    return res.status(400).json({ error: "Title, author, and price are required" });
+  }
+
+  // Generate new ID (string)
+  const newId = (books.length + 1).toString();
+
+  const newBook = {
+    id: newId,
+    title,
+    author,
+    description: description || "",
+    price,
+    isbn: isbn || "",
+    genre: genre || [],
+    tags: tags || [],
+    datePublished: datePublished || new Date().toISOString().split('T')[0],
+    pages: pages || 0,
+    language: language || "English",
+    publisher: publisher || "",
+    rating: rating || 0,
+    reviewCount: reviewCount || 0,
+    inStock: inStock !== undefined ? inStock : true,
+    featured: featured || false
+  };
+
+  // Add to array
+  books.push(newBook);
+
+  res.status(201).json({
+    message: "Book added successfully",
+    book: newBook
+  });
+});
+
+//Add New Review Endpoint
+app.post('/api/reviews', (req, res) => {
+  const { bookId, author, rating, title, comment, verified } = req.body;
+
+  // validation
+  if (!bookId || !author || !rating || !title || !comment) {
+    return res.status(400).json({ 
+      error: "bookId, author, rating, title, and comment are required" 
+    });
+  }
+
+  // Check if the book exists
+  const book = books.find(b => b.id === bookId);
+  if (!book) {
+    return res.status(404).json({ error: "Book not found" });
+  }
+
+  // Generate new review ID
+  const newId = `review-${reviews.length + 1}`;
+
+  const newReview = {
+    id: newId,
+    bookId,
+    author,
+    rating,
+    title,
+    comment,
+    timestamp: new Date().toISOString(),
+    verified: verified || false
+  };
+
+  // Add review to the array
+  reviews.push(newReview);
+
+  //update book's review count (in memory)
+  book.reviewCount = (book.reviewCount || 0) + 1;
+
+  res.status(201).json({
+    message: "Review added successfully",
+    review: newReview
+  });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

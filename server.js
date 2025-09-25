@@ -1,6 +1,8 @@
 const express = require("express");
 const fs= require("fs");
 const path = require("path");
+const morgan =require("morgan");
+
 const authUserPath = path.join(__dirname, 'data', 'authUsers.json');
 const AUTH_USERS = JSON.parse(fs.readFileSync(authUserPath)).users;
 const app = express();
@@ -9,6 +11,11 @@ const PORT = process.env.PORT || 3000;
 const { books } = require("./data/books.json");
 const { reviews } = require("./data/reviews.json");
 
+//Middleware using morgan
+const logDirectory = path.join(__dirname, 'logging');
+fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
+const accessLogStream = fs.createWriteStream(path.join(logDirectory, 'log.txt'), { flags: 'a' });
+app.use(morgan('combined', { stream: accessLogStream }));
 app.use(express.json());
 
 //Get Routes
